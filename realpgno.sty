@@ -3,15 +3,34 @@
 \begin{luacode}
 require("realpgno")
 mycheck = realpgno.checksum()
+newcheck = realpgno.checksum()
 
+function joj(head) 
+  for it in node.traverse_id(node.id("hlist"),head) do
+    for item in node.traverse(it.list) do
+      newcheck(item)
+    end
+  end
+  texio.write_nl("Output checksum: "..newcheck())
+  texio.write_nl("Node count: "..node.length(head))
+end
 function fuf(head,x)
   for item in  node.traverse(head) do
-    mycheck(item)
+    texio.write_nl("output running: "..mycheck(item))
   end
-  texio.write_nl("Checksum "..mycheck())
+  --texio.write_nl("Checksum "..mycheck())
   realpgno.fuf:write(realpgno.nl) 
   return head
 end
 
 luatexbase.add_to_callback("pre_linebreak_filter",fuf,"Insert")
+
 \end{luacode}
+\newtoks\oldoutput
+\oldoutput=\expandafter{\the\output}
+\output{%
+\typeout{Output routine}
+\luaexec{joj(tex.box[255].list)}
+\typeout{End output routine}
+\the\oldoutput
+}
