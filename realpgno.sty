@@ -9,16 +9,9 @@ function fuf(head,x)
     mycheck(item)
   end
   texio.write_nl("Checksum "..mycheck())
-  io.stdout:write("\\n")
-  local fn = font.current()
-  for k,v in pairs(font.fonts[fn].characters[102]["ligatures"]) do 
-    texio.write_nl(k.." : "..v["char"])
-  end 
+  realpgno.fuf:write(realpgno.nl) 
   return head
 end
-local fn = font.current()
-for k,v in ipairs(font.fonts[fn].characters) do
-  texio.write_nl(k,type(v))
-end
+
 luatexbase.add_to_callback("pre_linebreak_filter",fuf,"Insert")
 \end{luacode}
