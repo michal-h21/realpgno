@@ -6,8 +6,11 @@ local disc_id = 7
 local whatsits_id = 8
 local hlist_id = 0
 local vlist_id = 1
-fuf = io.open("fontspec4ht.txt","w")
+fuf = io.open("bez4ht.txt","w")
 nl ="\n"
+
+-- char value of hyphen, we need to skip it
+hyphenchar = 45
 
 
 -- simple checksum factory, return value is counting function
@@ -28,7 +31,8 @@ function checksum()
       end
     end
     if item == nil then return sum end  
-    if item.id == glyph_id and to_skip == false then
+    local skip_now = to_skip  or (node.has_attribute(item,224) == 33)
+    if item.id == glyph_id and skip_now == false and item.char ~= hyphenchar then-- to_skip == false and node.has_attribute(item,224) ~= 33 then
       -- if node has components, it is ligature and we need to loop over ligature glyphs
       if item.subtype > 0 and item.components then 
         loop_components(item.components)
