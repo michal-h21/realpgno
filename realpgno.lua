@@ -59,9 +59,11 @@ function checksum()
     elseif item.id == whatsits_id and item.subtype == 3 and item.data == "t4ht@[" then
       to_skip = true
       texio.write_nl("TeX4ht skip begin")
+      fuf:write("\nTex4ht skip begin\n")
     elseif item.id == whatsits_id and item.subtype == 3 and item.data == "t4ht@]" then
       to_skip = false
       texio.write_nl("TeX4ht skip end")
+      fuf:write("\nTeX4ht skip end\n")
     elseif item.id == hlist_id and item.subtype == 2 then
       fuf:write("[:hlist:"..item.subtype.."]")   
       loop_components(item.head)
@@ -87,7 +89,16 @@ function checksum()
       end
       fuf:write("["..item.data.."]")
     else 
-      fuf:write("("..item.id..")")
+      if item.id == glyph_id then
+	 if to_skip then fuj = "true" else fuj = "false" end
+	 if  node.has_attribute(item,224) == 33 then node_attr = "true" else node_attr ="false" end	 
+
+	 fuf:write("(glyph :" ..unicode.utf8.char(item.char) .. " to skip: ".. fuj .." attribute ".. node_attr ..")")
+      elseif item.id == 8 and item.subtype==3 then
+	 fuf:write("(tex4ht: "..item.data..")")
+      else
+        fuf:write("("..item.id..")")
+      end
     end
     return sum
   end
