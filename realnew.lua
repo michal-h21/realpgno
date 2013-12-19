@@ -1,6 +1,8 @@
 -- module("...",package.seeall())
 local persistence = require "realpgno-persistence"
 local stack      = require "realpgno-stack"
+local glyph_id = node.id("glyph")
+local m = {}
 
 local NodeParser = function()
 	local Parser = {
@@ -28,14 +30,30 @@ local NodeParser = function()
 				self.current = current
 				self.stream = stream
 			end
+			return self
 		end,
 		get_type = function(self,n)
-			if type(n) =="table" then
-				local nl = NodeCount.new()
-				return nl:process_hlist(n), "hlist"
+			if n.id == glyph_id then
+				if n.subtype > 0 and n.components then
+					local nl = NodeCount.new()
+					return nl:process_hlist(n.components), "hlist"
+				else
+					return unicode.utf8.char(n.char), "text"
+				end
+			end
+			--[[if type(n) =="table" then
 			else
 				return n, "text"
 			end
+			--]]
+		end,
+		finish = function(self)
+			local stream = self.stream or {}
+			local current = self.current or {}
+			table.insert(stream, current)
+			self.stream = stream
+			self.current = nil
+			return self
 		end
 	}
 	return setmetatable({},{__index = Parser})
@@ -66,16 +84,16 @@ function NodeCount:process_hlist(head)
 	return n .."]"
 	--]]
 	local np = NodeParser()
-	for _, v in pairs(head) do
+	for _, v in node.traverse(head) do
 		np:add(v)
 	end
-	return np
+	return np:finish()
 end
 
 
-local j = {"aaa","nnn",{"qq","qqq","www"},"qqq","ssd"}
-local k = NodeCount.new()
-local s = k:process_hlist(j)
+--local j = {"aaa","nnn",{"qq","qqq","www"},"qqq","ssd"}
+--local k = NodeCount.new()
+--local s = k:process_hlist(j)
 
 local function print_r(t, depth)
 	local depth = depth or 0
@@ -92,5 +110,8 @@ local function print_r(t, depth)
 	end
 end
 
-print_r(s)
-persistence.store("pokus.txt", s)
+m.NodeParser = NodeParser
+m.NodeCount  = NodeCount
+return m
+--print_r(s)
+--persistence.store("pokus.txt", s)
