@@ -2,7 +2,9 @@
 local persistence = require "realpgno-persistence"
 local stack      = require "realpgno-stack"
 local glyph_id = node.id("glyph")
+local hlist_id = 0
 local m = {}
+local tex_write = texio.write_nl
 
 local NodeParser = function()
 	local Parser = {
@@ -14,14 +16,17 @@ local NodeParser = function()
 		current = {},
 		add = function(self, n)
 			local value,t = self:get_type(n)
+			tex_write(t)
 			if value then
 				local current = self.current or {}
 				local stream = self.stream or {}
 				if current and t == current.type then
-					current.value = current.value .." + ".. value
+					if t == "text" then
+						current.value = current.value .." + ".. value
+					end
+					--table.insert(current.value, value)
 				else
 					print("Měníme stream")
-					print(value,t)
 					if current then 
 					  table.insert(stream, self:start(current.value,current.type))
 					end
@@ -33,13 +38,18 @@ local NodeParser = function()
 			return self
 		end,
 		get_type = function(self,n)
+			local n = n or {id=false}
+			local nl = NodeCount.new()
 			if n.id == glyph_id then
 				if n.subtype > 0 and n.components then
-					local nl = NodeCount.new()
-					return nl:process_hlist(n.components), "hlist"
+					return nl:process_hlist(n.components), "components"
 				else
 					return unicode.utf8.char(n.char), "text"
 				end
+			elseif n.id == hlist_id then
+				return nl:process_hlist(n.head),"hlist"
+			else
+				return n.id, "unknown"
 			end
 			--[[if type(n) =="table" then
 			else
@@ -84,9 +94,11 @@ function NodeCount:process_hlist(head)
 	return n .."]"
 	--]]
 	local np = NodeParser()
-	for _, v in node.traverse(head) do
+	for v in node.traverse(head) do
+		print(v.id)
 		np:add(v)
 	end
+	--print_r(np)
 	return np:finish()
 end
 
@@ -95,8 +107,9 @@ end
 --local k = NodeCount.new()
 --local s = k:process_hlist(j)
 
-local function print_r(t, depth)
+function print_r(t, depth)
 	local depth = depth or 0
+	if not t then print "nil"; return nil end
 	local pad = string.rep(" ",depth*2)
 	for k,v in pairs(t) do
 		if type(v)=="table" then
