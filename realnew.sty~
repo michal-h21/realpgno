@@ -1,5 +1,5 @@
 \ProvidesPackage{realnew}
-\RequirePackage{luacode,luatexbase,etoolbox}
+\RequirePackage{luacode,luatexbase}
 \begin{luacode}
 local realpgno = require("realnew")
 local storage = require "realpgno-persistence"
@@ -58,7 +58,7 @@ end,"Save page breaks")
 \the\oldoutput
 }
 
-\AfterEndDocument{%
+\AtEndDocument{%
 	\luaexec{save(j)}
 }
 \def\realpgnooff{\luatexattribute224=33\relax}

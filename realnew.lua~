@@ -99,7 +99,7 @@ local NodeParser = function()
            -- return type(data), "tex4ht@char"
           end
           self.skip_one = true
-          return unicode.utf8.char(tonumber(ndata,16)), "text"
+          return unicode.utf8.char(tonumber(ndata,16)), "tex4ht@char"
         else
            return s, "tex4ht@characters"
         end
