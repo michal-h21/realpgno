@@ -13,15 +13,19 @@ local tex_write = texio.write_nl
 local NodeParser = function()
   local Parser = {
     start = function(self,value,t) 
-      local t = t or "text"
-      return {value = value, type = t}
+      if value then
+        local t = t or "text"
+        return {value = value, type = t}
+      else
+        return nil
+      end
     end,
     stream = {},
     current = {},
     skip_one = false,
     add = function(self, n)
       local value,t = self:get_type(n)
-      tex_write(t)
+      -- tex_write(t)
       if value then
         local current = self.current or {}
         local stream = self.stream or {}
@@ -31,7 +35,7 @@ local NodeParser = function()
           end
           --table.insert(current.value, value)
         else
-          print("Měníme stream")
+          -- print("Měníme stream")
           if current then 
             table.insert(stream, self:start(current.value,current.type))
           end
@@ -60,7 +64,7 @@ local NodeParser = function()
         return nl:process_hlist(n.head),"hlist"
       elseif n.id == glue_id then
         if n.subtype == 0 then
-          return " ", "text"
+          return " ", "space"
         else
           return n.subtype, "glue"
         end
@@ -110,7 +114,11 @@ local NodeParser = function()
       local stream = self.stream or {}
       local current = self.current or {}
       table.insert(stream, current)
-      self.stream = stream
+      if #stream > 0 then
+        self.stream = stream
+      else 
+        self.stream = nil
+      end
       self.current = nil
       return self
     end
