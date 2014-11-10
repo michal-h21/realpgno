@@ -1,0 +1,24 @@
+\documentclass{article}
+\usepackage[a5paper]{geometry}
+\usepackage{fontspec}
+\usepackage[math]{blindtext}
+\usepackage{unicode-math}
+%	\usepackage{realnew}
+\usepackage{luacode}
+\begin{luacode*}
+np = require "nodeprocess"
+\end{luacode*}
+\newtoks\oldoutput
+\oldoutput=\expandafter{\the\output}
+\output{%
+\typeout{Output routine}
+\luaexec{np:make_paragraphs(tex.box[255].list)}
+\typeout{End output routine}
+\the\oldoutput
+}
+\begin{document}
+Příliš žluťoučký kůň úpěl ďábelské ódy\footnote{pokus}. A $c=\sqrt{a^2+b^2}$. Trochu ten text prodloužím, aby mi taky někde vyšel konec stránky uvnitř odstavce. Očividně musím trochu víc, jeden řádek nestačil. No ale to musím trošku přidat, zatím to o další řádek text neprotáhlo. Je už to teď lepší? 
+\blinddocument
+\end{document}
+
+
