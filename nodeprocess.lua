@@ -8,6 +8,17 @@
 local Nodeprocess = {}
 local hlist_id = node.id("hlist")
 local glyph_id = node.id("glyph")
+local whatsits_id = node.id("whatsit")
+local uchar = unicode.utf8.char
+
+function bit(p)
+	return 2 ^ (p - 1) -- 1-based indexing
+end -- Typical call: if hasbit(x, bit(3)) then .and.. i
+function hasbit(x, p)
+	return x % (p + p) >= p
+end
+
+
 Nodeprocess.__index = Nodeprocess
 
 Nodeprocess.new = function()
@@ -17,31 +28,50 @@ end
 
 Nodeprocess.process_hlist = function(self,hlist, nodelist)
 	local nodelist = nodelist or {}
-	local x 
+	local x, linebreak
 	for n in node.traverse(hlist) do
-		if n.id == glyph_id then
+		if n.id == glyph_id  then
 			--print("glyph",n.char, n.subtype)
-			x = n.char .. " - ".. n.subtype
-			table.insert(nodelist, x)
+			x = uchar(n.char)
+			if n.subtype ~= 0 then 
+			  table.insert(nodelist, x)
+				linebreak = false
+			else
+				linebreak = true
+			end
 		elseif n.id == hlist_id then
-			nodelist = self:process_hlist(n.head,nodelist)
+			nodelist, linebreak = self:process_hlist(n.head,nodelist)
+		elseif n.id == whatsits_id and n.subtype == 6 then
+			-- subtype 6 is paragraph start
+			print("New paragraph")
+			nodelist.new = true
+			return nodelist, n
 		end
 	end
-
-	print(x, "-----------")
-	return nodelist
+	print(table.concat(nodelist))
+	nodelist.linebreak = linebreak
+	return nodelist, false
 end
 
 
 Nodeprocess.make_paragraphs = function(self,lines)
 	local paragraphs = {}
-	local par = par
+	local par = {}
+	local rest
 	for line in node.traverse_id(hlist_id,lines) do
-		par = self:process_hlist(line.head,par)
-		if par.new == true then
+		rest = nil
+		par, rest = self:process_hlist(line.head,par)
+		-- if par.new == true then
+		if rest then
 			table.insert(paragraphs, par)
-			par = {}
+			par = self:process_hlist(rest,{})
 		end
+	end
+	table.insert(paragraphs, par)
+	print("Page")
+	for i, par in ipairs(paragraphs) do
+		print("Linebreak", par.linebreak)
+		print(table.concat(par))
 	end
 	return paragraphs
 end
