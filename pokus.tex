@@ -9,11 +9,17 @@
 np = require "nodeprocess"
 pagebuilder = require "pagebuilder"
 parbuilder = require "parbuilder" 
--- luatexbase.add_to_callback("pre_linebreak_filter", 
--- function(head) 
---   pagebuilder.add(np:process_hlist(head))
---   return head
--- end, "Save paragraphs")
+luatexbase.add_to_callback("pre_linebreak_filter", 
+function(head, groupcode) 
+  -- we must call process_hlist two times, because it stops on 
+  -- local_par whatsit node
+  local nodes, rest = np:process_hlist(head)
+  nodes = np:process_hlist(rest,nodes)
+  nodes.groupcode=groupcode
+  print("par filter",#nodes)
+  parbuilder.add(nodes)
+  return true
+end, "Save paragraphs")
 \end{luacode*}
 \newtoks\oldoutput
 \oldoutput=\expandafter{\the\output}
