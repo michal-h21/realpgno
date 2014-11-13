@@ -7,9 +7,13 @@
 
 local Nodeprocess = {}
 local hlist_id = node.id("hlist")
+local vlist_id = node.id("vlist")
 local glyph_id = node.id("glyph")
 local whatsits_id = node.id("whatsit")
 local uchar = unicode.utf8.char
+local prehyphenchar = lang.prehyphenchar
+local languages = {}
+
 
 function bit(p)
 	return 2 ^ (p - 1) -- 1-based indexing
@@ -31,9 +35,14 @@ Nodeprocess.process_hlist = function(self,hlist, nodelist)
 	local x, linebreak
 	for n in node.traverse(hlist) do
 		if n.id == glyph_id  then
+			local nlang = n.lang
+			-- we must get current language, all languages are stored in table for 
+			-- efficiency
+			local l = languages[nlang] or lang.new(nlang)
+			languages[nlang] = l
 			--print("glyph",n.char, n.subtype)
 			x = uchar(n.char)
-			if n.subtype ~= 0 then 
+			if n.subtype ~= 0 or n.char ~= prehyphenchar(l) then 
 			  table.insert(nodelist, x)
 				linebreak = false
 			else
@@ -41,14 +50,17 @@ Nodeprocess.process_hlist = function(self,hlist, nodelist)
 			end
 		elseif n.id == hlist_id then
 			nodelist, linebreak = self:process_hlist(n.head,nodelist)
+		elseif n.id == vlist_id then
+			nodelist, linebreak = self:process_hlist(n.head,nodelist)
 		elseif n.id == whatsits_id and n.subtype == 6 then
 			-- subtype 6 is paragraph start
-			print("New paragraph")
-			nodelist.new = true
-			return nodelist, n
+			-- nodelist.new = true
+			return nodelist, n.next
+		else
+			-- table.insert(nodelist,string.format("(%i)",n.id))
 		end
 	end
-	print(table.concat(nodelist))
+	-- print(table.concat(nodelist))
 	nodelist.linebreak = linebreak
 	return nodelist, false
 end
