@@ -53,7 +53,7 @@ end,"Save page breaks")
 \oldoutput=\expandafter{\the\output}
 \output{%
 \typeout{Output routine}
-%\luaexec{table.insert(j,realnew(tex.box[255].list))}
+\luaexec{table.insert(j,realnew(tex.box[255].list))}
 \typeout{End output routine}
 \the\oldoutput
 }

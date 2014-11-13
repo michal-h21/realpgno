@@ -8,6 +8,12 @@
 \begin{luacode*}
 np = require "nodeprocess"
 pagebuilder = require "pagebuilder"
+parbuilder = require "parbuilder" 
+-- luatexbase.add_to_callback("pre_linebreak_filter", 
+-- function(head) 
+--   pagebuilder.add(np:process_hlist(head))
+--   return head
+-- end, "Save paragraphs")
 \end{luacode*}
 \newtoks\oldoutput
 \oldoutput=\expandafter{\the\output}
@@ -18,8 +24,10 @@ pagebuilder = require "pagebuilder"
 \the\oldoutput
 }
 
+
 \AfterEndDocument{%
 	\luaexec{pagebuilder.save(tex.jobname..".pages")}
+	\luaexec{parbuilder.save(tex.jobname..".pars")}
 }
 \begin{document}
 Příliš žluťoučký kůň úpěl ďábelské ódy\footnote{pokus}. A $c=\sqrt{a^2+b^2}$. Trochu ten text prodloužím, aby mi taky někde vyšel konec stránky uvnitř odstavce. Očividně musím trochu víc, jeden řádek nestačil. No ale to musím trošku přidat, zatím to o další řádek text neprotáhlo. Je už to teď lepší? 
