@@ -8,6 +8,8 @@ function Parbuilder.add(par)
 	table.insert(paragraphs, par)
 end
 
-function save(filename)
+function Parbuilder.save(filename)
 	persistence.store(filename, paragraphs)
 end
+
+return Parbuilder
