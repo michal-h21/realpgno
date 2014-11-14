@@ -21,11 +21,12 @@ function Pagebuilder.add(page, paragraphs)
 		i = i + 1
 		local curr = paragraphs[i]  or {}
 		table.insert(curr,1, pageobj)
+		curr.page = page
 		table.insert(allparagraphs,curr)
 	else
 		-- we need to join last paragraph from previous page with first from new 
 		-- page. curr.linebreak is set to true when last page ended with hyphenated
-		-- word
+		-- word. we doesn't insert page number, because it is set already
 		local curr = allparagraphs[#allparagraphs] or {}
 		local new = paragraphs[i]
 		table.insert(curr, pageobj)
@@ -35,8 +36,11 @@ function Pagebuilder.add(page, paragraphs)
 		allparagraphs[#allparagraphs] = curr
 	end
 	i = i + 1
+	allparagraphs[#allparagraphs].pagebreak = true
 	for i = i, #paragraphs do
-		table.insert(allparagraphs,paragraphs[i])
+		local curr = paragraphs[i]
+		curr.page = page
+		table.insert(allparagraphs,curr)
 	end
 end
 
