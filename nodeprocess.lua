@@ -27,11 +27,13 @@ Nodeprocess.__index = Nodeprocess
 
 Nodeprocess.new = function()
   local self = setmetatable({}, Nodeprocess)
+	self.count = 0
   return self
 end
 
 Nodeprocess.process_hlist = function(self,hlist, nodelist)
 	local nodelist = nodelist or {}
+	local count = nodelist.count or 0
 	local x, linebreak
 	for n in node.traverse(hlist) do
 		if n.id == glyph_id  then
@@ -41,6 +43,9 @@ Nodeprocess.process_hlist = function(self,hlist, nodelist)
 			local l = languages[nlang] or lang.new(nlang)
 			languages[nlang] = l
 			--print("glyph",n.char, n.subtype)
+			if not nodelist.skip then
+				count = count + n.char
+			end
 			x = uchar(n.char)
 			if n.subtype ~= 0 or n.char ~= prehyphenchar(l) then 
 			  table.insert(nodelist, x)
@@ -56,11 +61,18 @@ Nodeprocess.process_hlist = function(self,hlist, nodelist)
 			-- subtype 6 is paragraph start
 			-- nodelist.new = true
 			return nodelist, n.next
+		elseif n.id == 9 then
+			if n.subtype == 0 then
+				nodelist.skip = true
+			else
+				nodelist.skip = false
+			end
 		else
 			-- table.insert(nodelist,string.format("(%i)",n.id))
 		end
 	end
 	-- print(table.concat(nodelist))
+	nodelist.count = count
 	nodelist.linebreak = linebreak
 	return nodelist, false
 end
