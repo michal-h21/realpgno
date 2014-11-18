@@ -1,0 +1,73 @@
+\ProvidesPackage{realnew}
+\RequirePackage{luacode,luatexbase,etoolbox}
+\begin{luacode}
+local realpgno = require("realnew")
+local storage = require "realpgno-persistence"
+
+function joj(head) 
+  --for it in node.traverse_id(node.id("hlist"),head) do
+  for it in node.traverse(head) do
+    if it.id == node.id("hlist") and it.subtype == 1  then
+     realpgno.fuf:write("[-hlist :"..it.subtype.."]")
+     for item in node.traverse(it.list) do
+       newcheck(item)
+     end
+     realpgno.fuf:write("[:hlist"..it.subtype.."->]")
+    else
+      realpgno.fuf:write("[-"..node.type(it.id).."-]")
+    end
+  end
+  texio.write_nl("Output checksum: "..newcheck())
+  texio.write_nl("Node count: "..node.length(head))
+end
+function fuf(head,x)
+  for item in  node.traverse(head) do
+    --texio.write_nl("output running: "..mycheck(item))
+    mycheck(item)
+  end
+  texio.write_nl("Checksum "..mycheck())
+  realpgno.fuf:write(realpgno.nl) 
+  return head
+end
+
+local nc = realpgno.NodeCount
+
+j = {}
+function realnew(list)
+  local x = nc:process_hlist(list)
+	print_r(x)
+	return x
+end
+
+function save(j)
+  local c = {"aaa","ccc"}
+  storage.store(tex.jobname..".txt",j,c)
+end
+luatexbase.add_to_callback("pre_output_filter", function(head)
+table.insert(j,realnew(head))
+return true
+end,"Save page breaks")
+\end{luacode}
+% -- luatexbase.add_to_callback("pre_linebreak_filter",fuf,"Insert")
+\newtoks\oldoutput
+\oldoutput=\expandafter{\the\output}
+\output{%
+\typeout{Output routine}
+\luaexec{table.insert(j,realnew(tex.box[255].list))}
+\typeout{End output routine}
+\the\oldoutput
+}
+
+\AfterEndDocument{%
+	\luaexec{save(j)}
+}
+\def\realpgnooff{\luatexattribute224=33\relax}
+\def\realpgnoon{\luatexattribute224=22\relax}
+
+%Hooks for commands 
+%\let\old@footnote\footnote
+%\renewcommand\footnote[1]{%
+%	\realpgnooff%
+%	\old@footnote{#1}%
+%	\realpgnoon%
+%}
