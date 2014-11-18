@@ -3,38 +3,7 @@
 \usepackage{fontspec}
 \usepackage[math]{blindtext}
 \usepackage{unicode-math}
-%	\usepackage{realnew}
-\usepackage{luacode}
-\begin{luacode*}
-np = require "nodeprocess"
-pagebuilder = require "pagebuilder"
-parbuilder = require "parbuilder" 
-luatexbase.add_to_callback("pre_linebreak_filter", 
-function(head, groupcode) 
-  -- we must call process_hlist two times, because it stops on 
-  -- local_par whatsit node
-  local nodes, rest = np:process_hlist(head)
-  nodes = np:process_hlist(rest,nodes)
-  nodes.groupcode=groupcode
-  print("par filter",#nodes)
-  parbuilder.add(nodes, groupcode)
-  return true
-end, "Save paragraphs")
-\end{luacode*}
-\newtoks\oldoutput
-\oldoutput=\expandafter{\the\output}
-\output{%
-\typeout{Output routine}
-\luaexec{pagebuilder.add("\thepage",np:make_paragraphs(tex.box[255].list))}
-\typeout{End output routine}
-\the\oldoutput
-}
-
-
-\AfterEndDocument{%
-	\luaexec{pagebuilder.save(tex.jobname..".pages")}
-	\luaexec{parbuilder.save(tex.jobname..".pars")}
-}
+\usepackage{realnew}
 \begin{document}
  Příliš žluťoučký kůň úpěl ďábelské ódy\footnote{pokus}. A $c=\sqrt{a^2+b^2}$. Trochu ten text prodloužím, aby mi taky někde vyšel konec stránky uvnitř odstavce. Očividně musím trochu víc, jeden řádek nestačil. No ale to musím trošku přidat, zatím to o další řádek text neprotáhlo. Je už to teď lepší? 
  
