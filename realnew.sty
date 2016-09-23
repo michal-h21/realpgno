@@ -10,11 +10,11 @@ function(head, groupcode)
   -- we must call process_hlist two times, because it stops on 
   -- local_par whatsit node
   local nodes, rest = np:process_hlist(head)
-  nodes = np:process_hlist(rest,nodes)
+  -- nodes = np:process_hlist(rest,nodes)
   nodes.groupcode=groupcode
   print("par filter",#nodes)
   parbuilder.add(nodes, groupcode)
-  return true
+  return head
 end, "Save paragraphs")
 \end{luacode*}
 \newtoks\oldoutput
