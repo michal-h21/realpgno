@@ -1,12 +1,12 @@
 -- module("...",package.seeall())
 local persistence = require "realpgno-persistence"
 --local stack      = require "realpgno-stack"
+local disc_id = node.id "discretionary"
+local glue_id = node.id "glue"
+local kern_id = node.id "kern"
 local glyph_id = node.id("glyph")
-local hlist_id = 0
-local disc_id = 7
-local whatsit_id = 8
-local glue_id = 10
-local kern_id = 11
+local hlist_id = node.id "hlist"
+local whatsit_id = node.id "whatsit"
 local m = {}
 local tex_write = texio.write_nl
 
