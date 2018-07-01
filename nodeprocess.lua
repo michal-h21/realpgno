@@ -66,7 +66,7 @@ Nodeprocess.process_hlist = function(self,hlist, nodelist)
 		elseif n.id == vlist_id then
 			nodelist, linebreak = self:process_hlist(n.head,nodelist)
     elseif n.id == glue_id then
-      table.insert(nodelist, " ")
+      -- table.insert(nodelist, " ")
     elseif n.id == par_id then
       -- return current paragraph on start of a new one
       -- the rest of the current list will be processed in
