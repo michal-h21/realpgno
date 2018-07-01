@@ -6,6 +6,8 @@
 -- compare reconstructed paragraphs with output of pre_linebreak_filter
 
 local Nodeprocess = {}
+local par_id = node.id("local_par")
+local math_id = node.id("math")
 local hlist_id = node.id("hlist")
 local vlist_id = node.id("vlist")
 local glyph_id = node.id("glyph")
@@ -14,11 +16,19 @@ local uchar = unicode.utf8.char
 local prehyphenchar = lang.prehyphenchar
 local languages = {}
 
+local function load_lang(nlang)
+			-- we must get current language, all languages are stored in table for 
+			-- efficiency
+			local l = languages[nlang] or lang.new(nlang)
+			languages[nlang] = l
+      return l
+    end
 
-function bit(p)
+
+local function bit(p)
 	return 2 ^ (p - 1) -- 1-based indexing
 end -- Typical call: if hasbit(x, bit(3)) then .and.. i
-function hasbit(x, p)
+local function hasbit(x, p)
 	return x % (p + p) >= p
 end
 
@@ -34,25 +44,19 @@ end
 Nodeprocess.process_hlist = function(self,hlist, nodelist)
 	local nodelist = nodelist or {}
 	local count = nodelist.count or 0
-	local x, linebreak
+	local x 
+  local linebreak = false
+  -- lang of the last node to be used for the hyphenation detection
+  -- use English as default
+  local lastlang = load_lang(0) 
 	for n in node.traverse(hlist) do
 		if n.id == glyph_id  then
-			local nlang = n.lang
-			-- we must get current language, all languages are stored in table for 
-			-- efficiency
-			local l = languages[nlang] or lang.new(nlang)
-			languages[nlang] = l
-			--print("glyph",n.char, n.subtype)
+      lastlang = load_lang(n.lang)
 			if not nodelist.skip then
 				count = count + n.char
 			end
 			x = uchar(n.char)
-			if n.subtype ~= 0 or n.char ~= prehyphenchar(l) then 
-			  table.insert(nodelist, x)
-				linebreak = false
-			else
-				linebreak = true
-			end
+      table.insert(nodelist, x)
 		elseif n.id == hlist_id then
 			nodelist, linebreak = self:process_hlist(n.head,nodelist)
 		elseif n.id == vlist_id then
@@ -61,9 +65,13 @@ Nodeprocess.process_hlist = function(self,hlist, nodelist)
 			-- subtype 6 is paragraph start
 			-- nodelist.new = true
 			return nodelist, n.next
-		elseif n.id == 9 then
+    elseif n.id == par_id then
+      -- print("paragraph start")
+		elseif n.id == math_id then
+      -- math start
 			if n.subtype == 0 then
 				nodelist.skip = true
+      -- math end
 			else
 				nodelist.skip = false
 			end
@@ -72,6 +80,15 @@ Nodeprocess.process_hlist = function(self,hlist, nodelist)
 		end
 	end
 	-- print(table.concat(nodelist))
+  -- detect hyphenation
+  local currenthyphenchar = prehyphenchar(lastlang)
+  local currenthyphenstr = uchar(currenthyphenchar)
+  if nodelist[#nodelist] == currenthyphenstr then
+    -- remove the hyphen char
+    nodelist[#nodelist] = nil
+    -- remove it from the count
+    count = count - currenthyphenchar
+  end
 	nodelist.count = count
 	nodelist.linebreak = linebreak
 	return nodelist, false
