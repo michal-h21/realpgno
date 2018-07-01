@@ -1,28 +1,31 @@
 -- new start again
 -- first task:
 -- reconstruct paragraphs from hlists in output routine
--- each paragraph starts with whatsit with subtype local_par
+-- each paragraph starts with local_par node
 -- we need to deal with line breaks, resp. prehyphenchar
 -- compare reconstructed paragraphs with output of pre_linebreak_filter
 
 local Nodeprocess = {}
+
 local par_id = node.id("local_par")
 local math_id = node.id("math")
+local glue_id = node.id("glue")
 local hlist_id = node.id("hlist")
 local vlist_id = node.id("vlist")
 local glyph_id = node.id("glyph")
 local whatsits_id = node.id("whatsit")
+
 local uchar = unicode.utf8.char
 local prehyphenchar = lang.prehyphenchar
 local languages = {}
 
 local function load_lang(nlang)
-			-- we must get current language, all languages are stored in table for 
-			-- efficiency
-			local l = languages[nlang] or lang.new(nlang)
-			languages[nlang] = l
-      return l
-    end
+  -- we must get current language, all languages are stored in table for 
+  -- efficiency
+  local l = languages[nlang] or lang.new(nlang)
+  languages[nlang] = l
+  return l
+end
 
 
 local function bit(p)
@@ -46,6 +49,7 @@ Nodeprocess.process_hlist = function(self,hlist, nodelist)
 	local count = nodelist.count or 0
 	local x 
   local linebreak = false
+  local paragraphstart = false
   -- lang of the last node to be used for the hyphenation detection
   -- use English as default
   local lastlang = load_lang(0) 
@@ -61,12 +65,13 @@ Nodeprocess.process_hlist = function(self,hlist, nodelist)
 			nodelist, linebreak = self:process_hlist(n.head,nodelist)
 		elseif n.id == vlist_id then
 			nodelist, linebreak = self:process_hlist(n.head,nodelist)
-		elseif n.id == whatsits_id and n.subtype == 6 then
-			-- subtype 6 is paragraph start
-			-- nodelist.new = true
-			return nodelist, n.next
+    elseif n.id == glue_id then
+      table.insert(nodelist, " ")
     elseif n.id == par_id then
-      -- print("paragraph start")
+      -- return current paragraph on start of a new one
+      -- the rest of the current list will be processed in
+      -- a new call to this function
+      return nodelist, n.next 
 		elseif n.id == math_id then
       -- math start
 			if n.subtype == 0 then
@@ -88,9 +93,11 @@ Nodeprocess.process_hlist = function(self,hlist, nodelist)
     nodelist[#nodelist] = nil
     -- remove it from the count
     count = count - currenthyphenchar
+    linebreak = true
   end
 	nodelist.count = count
 	nodelist.linebreak = linebreak
+  nodelist.paragraph = paragraphstart
 	return nodelist, false
 end
 
@@ -102,11 +109,12 @@ Nodeprocess.make_paragraphs = function(self,lines)
 	for line in node.traverse_id(hlist_id,lines) do
 		rest = nil
 		par, rest = self:process_hlist(line.head,par)
-		-- if par.new == true then
-		if rest then
-			table.insert(paragraphs, par)
-			par = self:process_hlist(rest,{})
-		end
+    -- rest is node returned after new paragraph starts
+    if rest then
+      table.insert(paragraphs, par)
+      par = self:process_hlist(rest, {})
+      print("newpar", #par)
+    end
 	end
 	table.insert(paragraphs, par)
 	print("Page")
